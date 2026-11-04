@@ -14,6 +14,22 @@ const store = {
 
 const key = f => f.name + '|' + f.size;
 
+let showHidden = false;
+const getHidden = () => {
+  const arr = store.get('hiddenSeries');
+  return Array.isArray(arr) ? arr : [];
+};
+function hideSeries(name) {
+  const hidden = getHidden();
+  if (!hidden.includes(name)) hidden.push(name);
+  store.set('hiddenSeries', hidden);
+  renderCatalog();
+}
+function unhideSeries(name) {
+  store.set('hiddenSeries', getHidden().filter(n => n !== name));
+  renderCatalog();
+}
+
 const urlCache = new WeakMap();
 function objectUrl(file) {
   let u = urlCache.get(file);
@@ -58,6 +74,7 @@ function load(files) {
   stopPlayback();
   eps = [];
   subs = {};
+  showHidden = false;
   $('search').value = '';
   const groups = {};
 
@@ -109,14 +126,31 @@ function renderCatalog() {
   document.body.classList.add('catalog-mode');
   $('backBtn').style.display = 'none';
   
+  const series = Object.keys(window.catalog)
+    .sort((a, b) => a.localeCompare(b, 'es', { numeric: true, sensitivity: 'base' }));
+  const hidden = getHidden().filter(name => window.catalog[name]);
+  const hiddenSet = new Set(hidden);
+
+  if (hidden.length) {
+    const toolbar = document.createElement('div');
+    toolbar.className = 'catalog-toolbar';
+    const toggle = document.createElement('button');
+    toggle.className = 'btn ghost hide-toggle';
+    toggle.textContent = showHidden ? 'Ocultar series ocultas' : `Mostrar ocultas (${hidden.length})`;
+    toggle.onclick = () => { showHidden = !showHidden; renderCatalog(); };
+    toolbar.appendChild(toggle);
+    list.appendChild(toolbar);
+  }
+
   const grid = document.createElement('div');
   grid.className = 'catalog-grid';
-  
-  const series = Object.keys(window.catalog);
-  
+
   series.forEach(name => {
     if (q && !name.toLowerCase().includes(q)) return;
-    
+
+    const isHidden = hiddenSet.has(name);
+    if (isHidden && !showHidden) return;
+
     const group = window.catalog[name];
     const movies = isMovieFolder(name, group);
     const count = group.eps.length;
@@ -125,7 +159,7 @@ function renderCatalog() {
       : (count === 1 ? 'Episodio' : 'Episodios');
     
     const card = document.createElement('div');
-    card.className = 'series-card';
+    card.className = 'series-card' + (isHidden ? ' hidden-series' : '');
 
     card.innerHTML = `
       ${posterHtmlFor(group.cover, name)}
@@ -134,7 +168,17 @@ function renderCatalog() {
         <span class="eps-count">${count} ${countLabel}</span>
       </div>
     `;
-    
+
+    const action = document.createElement('button');
+    action.className = 'card-action';
+    action.title = isHidden ? 'Mostrar serie' : 'Ocultar serie';
+    action.textContent = isHidden ? '↺' : '✕';
+    action.onclick = e => {
+      e.stopPropagation();
+      if (isHidden) unhideSeries(name); else hideSeries(name);
+    };
+    card.appendChild(action);
+
     card.onclick = () => openFolder(name);
     grid.appendChild(card);
   });
@@ -375,6 +419,147 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'n') play(cur + 1);
   else if (e.key === 'p') play(cur - 1);
 });
+
+// Intro animada estilo Netflix
+function playIntroSound(ctx, at) {
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0.0001, at);
+  master.gain.exponentialRampToValueAtTime(0.5, at + 0.04);
+  master.gain.exponentialRampToValueAtTime(0.0001, at + 1.6);
+  master.connect(ctx.destination);
+
+  [
+    { f0: 150, f1: 110, t: 0, dur: 0.9, vol: 0.4 },
+    { f0: 92, f1: 68, t: 0.32, dur: 1.2, vol: 0.55 }
+  ].forEach(n => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    osc.type = 'sawtooth';
+    filter.type = 'lowpass';
+    filter.frequency.value = 780;
+    osc.frequency.setValueAtTime(n.f0, at + n.t);
+    osc.frequency.exponentialRampToValueAtTime(n.f1, at + n.t + n.dur);
+    gain.gain.setValueAtTime(0.0001, at + n.t);
+    gain.gain.exponentialRampToValueAtTime(n.vol, at + n.t + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + n.t + n.dur);
+    osc.connect(gain).connect(filter).connect(master);
+    osc.start(at + n.t);
+    osc.stop(at + n.t + n.dur + 0.05);
+  });
+
+  const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.3), ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 3);
+  }
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const noiseGain = ctx.createGain();
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseGain.gain.value = 0.22;
+  noiseFilter.type = 'lowpass';
+  noiseFilter.frequency.value = 520;
+  noise.connect(noiseFilter).connect(noiseGain).connect(master);
+  noise.start(at);
+}
+
+function startIntroAudio(startMs, onPlay) {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return { stop() {} };
+  let ctx;
+  try { ctx = new AC(); } catch { return { stop() {} }; }
+
+  let played = false;
+  const schedule = () => {
+    if (played || ctx.state !== 'running') return;
+    played = true;
+    const hold = Math.max(0, 1.15 - (performance.now() - startMs) / 1000);
+    playIntroSound(ctx, ctx.currentTime + hold);
+    if (onPlay) onPlay();
+  };
+
+  const removeUnlock = () => {
+    window.removeEventListener('pointerdown', unlock);
+    window.removeEventListener('keydown', unlock);
+    window.removeEventListener('touchstart', unlock);
+  };
+  const unlock = () => {
+    const p = ctx.resume();
+    if (p && p.then) p.then(schedule).catch(() => {});
+    else schedule();
+    removeUnlock();
+  };
+
+  if (ctx.state === 'running') {
+    schedule();
+  } else {
+    window.addEventListener('pointerdown', unlock);
+    window.addEventListener('keydown', unlock);
+    window.addEventListener('touchstart', unlock, { passive: true });
+  }
+
+  return {
+    stop() {
+      removeUnlock();
+      try { if (ctx.state !== 'closed') ctx.close(); } catch {}
+    }
+  };
+}
+
+function setupIntro() {
+  const intro = document.createElement('div');
+  intro.className = 'intro';
+  intro.innerHTML = `
+    <div class="intro-fx"></div>
+    <div class="intro-content">
+      <div class="intro-mark">
+        <span class="intro-letter">A</span>
+        <span class="intro-letter">N</span>
+        <span class="intro-letter">I</span>
+        <span class="intro-letter">M</span>
+        <span class="intro-letter">E</span>
+      </div>
+      <div class="intro-sub">LOCAL</div>
+      <div class="intro-line"></div>
+    </div>
+    <div class="intro-hint">Toca para activar el sonido</div>
+    <button class="intro-skip" type="button">Saltar</button>
+  `;
+  document.body.appendChild(intro);
+
+  const start = performance.now();
+  let finished = false;
+  const hint = intro.querySelector('.intro-hint');
+  const audio = startIntroAudio(start, () => hint.remove());
+
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    audio.stop();
+    document.removeEventListener('keydown', onKey);
+    intro.remove();
+  };
+  const skip = () => {
+    intro.classList.add('closing');
+    setTimeout(finish, 380);
+  };
+  const onKey = e => {
+    if (e.key === 'Escape' || e.key === 'Enter' || e.code === 'Space') {
+      e.preventDefault();
+      skip();
+    }
+  };
+
+  intro.querySelector('.intro-skip').onclick = e => {
+    e.stopPropagation();
+    skip();
+  };
+  document.addEventListener('keydown', onKey);
+  setTimeout(finish, 4600);
+}
+
+setupIntro();
 
 // Arrastrar y soltar
 document.addEventListener('dragover', e => e.preventDefault());
