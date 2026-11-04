@@ -498,6 +498,17 @@ aside {
   letter-spacing: 0.5px;
 }
 
+/* Pantalla de inicio: solo el mensaje, sin barra lateral */
+body.start-screen aside {
+  display: none;
+}
+
+body.start-screen #empty {
+  max-width: 560px;
+  padding: 50px 40px;
+  animation: intro-fade-in 0.6s ease both;
+}
+
 /* Barra de opciones del catálogo */
 .catalog-toolbar {
   display: flex;
@@ -690,6 +701,237 @@ aside {
   }
 }
 
+/* Controles del header según la vista */
+header #backBtn,
+header #prev,
+header #next {
+  display: none;
+}
+
+header .custom-select-wrapper,
+header .toggle-auto {
+  display: none;
+}
+
+body.series-view header #backBtn,
+body.series-view header #prev,
+body.series-view header #next {
+  display: inline-block;
+}
+
+body.series-view header .custom-select-wrapper,
+body.series-view header .toggle-auto {
+  display: inline-flex;
+}
+
+body.folder-view header #backBtn {
+  display: inline-block;
+}
+
+body.series-view header #pickFolder,
+body.series-view header #pickFiles,
+body.folder-view header #pickFolder,
+body.folder-view header #pickFiles {
+  display: none;
+}
+
+/* Cabecera de la serie */
+#seriesHeader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 34px 70px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.88), rgba(0, 0, 0, 0.35) 55%, transparent);
+  pointer-events: none;
+  animation: series-header-in 0.45s ease both;
+}
+
+#seriesHeader[hidden] {
+  display: none !important;
+}
+
+#seriesTitle {
+  margin: 0;
+  font-size: clamp(24px, 3.6vw, 46px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.85), 0 0 30px rgba(229, 9, 20, 0.25);
+  word-break: break-word;
+}
+
+.genre-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.genre-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  background: rgba(229, 9, 20, 0.16);
+  border: 1px solid rgba(229, 9, 20, 0.45);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.genre-chip button {
+  padding: 0;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.genre-chip button:hover {
+  color: #fff;
+}
+
+.genre-add {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--glass-border);
+  color: rgba(255, 255, 255, 0.8);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.genre-add:hover {
+  background: rgba(229, 9, 20, 0.2);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+@keyframes series-header-in {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Modal de géneros */
+#genreModal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: genre-modal-in 0.2s ease;
+}
+
+#genreModal[hidden] {
+  display: none !important;
+}
+
+.genre-modal-box {
+  width: min(540px, 100%);
+  padding: 26px;
+  background: rgba(12, 12, 14, 0.97);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 30px rgba(229, 9, 20, 0.1);
+}
+
+.genre-modal-box h3 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.genre-modal-sub {
+  margin: 6px 0 18px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+#genreInput {
+  width: 100%;
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+#genreInput:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.2);
+}
+
+.genre-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 16px 0 22px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.genre-suggestion {
+  padding: 5px 11px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.8);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.genre-suggestion:hover {
+  background: rgba(229, 9, 20, 0.18);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.genre-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+@keyframes genre-modal-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 800px) {
+  #seriesHeader {
+    padding: 18px 18px 50px;
+  }
+}
+
 /* Intro animada estilo Netflix */
 .intro {
   position: fixed;
@@ -835,6 +1077,29 @@ aside {
   border-color: var(--accent);
   background: rgba(229, 9, 20, 0.2);
   box-shadow: 0 0 16px rgba(229, 9, 20, 0.35);
+}
+
+/* Pantalla del logo por inactividad */
+.intro.idle {
+  animation: intro-idle-in 0.5s ease both;
+}
+
+.intro.idle .intro-content {
+  animation: none;
+  opacity: 1;
+}
+
+.intro.idle .intro-skip {
+  display: none;
+}
+
+.intro.idle.closing {
+  animation: intro-overlay-out 0.35s ease forwards;
+}
+
+@keyframes intro-idle-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes intro-letter-in {

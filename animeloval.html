@@ -14,12 +14,12 @@
 
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="start-screen">
   <header>
     <h1 id="logo" style="cursor:pointer;"><span></span> Anime Local</h1>
     <button class="btn" id="pickFolder">Abrir carpeta</button>
     <button class="btn ghost" id="pickFiles">Abrir archivos</button>
-    <button class="btn ghost" id="backBtn" style="display:none">⬅ Volver</button>
+    <button class="btn ghost" id="backBtn" title="Volver al inicio">⬅ Volver</button>
     <button class="btn ghost" id="prev">⏮</button>
     <button class="btn ghost" id="next">⏭</button>
    <div class="custom-select-wrapper">
@@ -44,6 +44,10 @@
   <main>
     <section id="stage">
       <div id="stageCover" hidden></div>
+      <div id="seriesHeader" hidden>
+        <h2 id="seriesTitle"></h2>
+        <div id="seriesGenres" class="genre-chips"></div>
+      </div>
       <div id="empty">
         <b>Abre tu carpeta de episodios</b>
         Los archivos no se suben a ningún lado; se reproducen directo desde tu equipo.<br><br>
@@ -58,6 +62,19 @@
       <div id="list"></div>
     </aside>
   </main>
+
+  <div id="genreModal" hidden>
+    <div class="genre-modal-box" role="dialog" aria-modal="true" aria-labelledby="genreModalTitle">
+      <h3 id="genreModalTitle">Editar géneros</h3>
+      <p class="genre-modal-sub">Sepáralos con comas</p>
+      <input id="genreInput" type="text" placeholder="Acción, Aventura, Fantasía…" autocomplete="off">
+      <div id="genreSuggestions" class="genre-suggestions"></div>
+      <div class="genre-modal-actions">
+        <button class="btn ghost" id="genreCancel" type="button">Cancelar</button>
+        <button class="btn" id="genreSave" type="button">Guardar</button>
+      </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
