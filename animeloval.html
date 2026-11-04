@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Anime Local</title>
+
+  <!-- Logo de la pestaña -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="alternate icon" href="favicon.ico">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <meta name="theme-color" content="#050505">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1 id="logo" style="cursor:pointer;"><span></span> Anime Local</h1>
+    <button class="btn" id="pickFolder">Abrir carpeta</button>
+    <button class="btn ghost" id="pickFiles">Abrir archivos</button>
+    <button class="btn ghost" id="backBtn" style="display:none">⬅ Volver</button>
+    <button class="btn ghost" id="prev">⏮</button>
+    <button class="btn ghost" id="next">⏭</button>
+   <div class="custom-select-wrapper">
+  <select id="speed" title="Velocidad">
+    <option value="0.75">0.75x</option>
+    <option value="1" selected>1x</option>
+    <option value="1.25">1.25x</option>
+    <option value="1.5">1.5x</option>
+    <option value="2">2x</option>
+  </select>
+  <span class="select-arrow">▼</span>
+</div>
+    <label class="toggle-auto">
+  <input type="checkbox" id="auto" checked>
+  <span class="slider"></span>
+  <span class="label-text">Siguiente automático</span>
+</label>
+    <input type="file" id="folderInput" webkitdirectory multiple hidden>
+    <input type="file" id="fileInput" multiple accept="video/*,.mkv,.srt,.vtt" hidden>
+  </header>
+
+  <main>
+    <section id="stage">
+      <div id="stageCover" hidden></div>
+      <div id="empty">
+        <b>Abre tu carpeta de episodios</b>
+        Los archivos no se suben a ningún lado; se reproducen directo desde tu equipo.<br><br>
+        <small style="color:var(--muted);">Subtítulos .srt/.vtt con el mismo nombre del video se cargan solos.</small>
+      </div>
+      <video id="v" controls hidden></video>
+      <div id="now" hidden></div>
+    </section>
+
+    <aside>
+      <input id="search" placeholder="Buscar episodio…">
+      <div id="list"></div>
+    </aside>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
